@@ -1,0 +1,50 @@
+{
+  "nom": "Prénom Nom",
+  "titre": "Chef de rang",
+  "email": "prenom.nom@email.fr",
+  "telephone": "06 12 34 56 78",
+  "ville": "Paris",
+  "resume": "Professionnel de salle avec 6 ans d'expérience en brasserie et restaurant gastronomique. Sens du service, rigueur et excellent relationnel client.",
+  "experiences": [
+    {
+      "poste": "Chef de rang",
+      "entreprise": "Le Bistrot Parisien",
+      "periode": "2022 – 2024",
+      "lieu": "Paris 8e",
+      "details": [
+        "Service en salle de 80 couverts, midi et soir",
+        "Conseil clients et accord mets-vins",
+        "Encaissement et clôture de caisse"
+      ]
+    },
+    {
+      "poste": "Serveur",
+      "entreprise": "Brasserie de la Gare",
+      "periode": "2019 – 2022",
+      "lieu": "Lyon",
+      "details": [
+        "Service rapide en coupure",
+        "Mise en place et dressage des tables"
+      ]
+    }
+  ],
+  "formations": [
+    {
+      "intitule": "CAP Restaurant",
+      "etablissement": "Lycée hôtelier",
+      "annee": "2019"
+    }
+  ],
+  "competences": [
+    "Service en salle",
+    "Port de plateau",
+    "Accueil client",
+    "Encaissement",
+    "Connaissances en vins"
+  ],
+  "langues": [
+    "Français (langue maternelle)",
+    "Anglais (courant)",
+    "Espagnol (notions)"
+  ]
+}

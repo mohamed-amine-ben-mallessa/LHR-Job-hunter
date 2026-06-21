@@ -1,12 +1,17 @@
-# Secrets — ne jamais committer
+# Secrets / données perso — ne jamais committer
 .env
+profil.json          # profil candidat réel (données personnelles)
 
 # Fichiers générés
 offres_24h.csv
 offres_24h.json
 *.csv
 *.json
+*.pdf                # CV générés
 out/
+
+# …mais on versionne les gabarits d'exemple
+!profil.example.json
 
 # Python
 __pycache__/
