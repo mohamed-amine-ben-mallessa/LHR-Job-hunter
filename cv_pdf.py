@@ -4,13 +4,16 @@
 ciblé sur l'offre. Les sections vides du profil sont omises.
 """
 
+import os
+
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import (HRFlowable, ListFlowable, ListItem, Paragraph,
-                                SimpleDocTemplate, Spacer)
+from reportlab.platypus import (HRFlowable, Image, ListFlowable, ListItem,
+                                Paragraph, SimpleDocTemplate, Spacer, Table,
+                                TableStyle)
 
 # Palette du template (un seul endroit pour ajuster le look).
 ACCENT = colors.HexColor("#1f4e79")   # bleu profond
@@ -21,7 +24,8 @@ def _styles():
     base = getSampleStyleSheet()
     s = {}
     s["nom"] = ParagraphStyle("nom", parent=base["Title"], fontSize=20,
-                              textColor=ACCENT, spaceAfter=2, leading=24)
+                              textColor=ACCENT, spaceAfter=2, leading=24,
+                              alignment=TA_LEFT)
     s["titre"] = ParagraphStyle("titre", parent=base["Normal"], fontSize=12,
                                 textColor=MUTED, spaceAfter=2)
     s["coord"] = ParagraphStyle("coord", parent=base["Normal"], fontSize=9,
@@ -61,9 +65,30 @@ def _bullets(items, s):
         bulletType="bullet", bulletColor=ACCENT, start="•", leftIndent=12)
 
 
-def build_cv(profil, offre, sortie):
+# Dimensions de la vignette photo (l'en-tête réserve exactement cette largeur).
+_PHOTO_W = 32 * mm
+_PHOTO_H = 40 * mm
+
+
+def _photo_flowable(path, largeur=_PHOTO_W, hauteur=_PHOTO_H):
+    """Image portrait (vignette) depuis `path`, ou None si absent/illisible.
+
+    Renvoyer None permet de générer le CV sans photo sans planter.
+    """
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        img = Image(path, width=largeur, height=hauteur, kind="proportional")
+        img.hAlign = "RIGHT"
+        return img
+    except Exception:
+        return None
+
+
+def build_cv(profil, offre, sortie, with_photo=True):
     """Construit le PDF du CV à `sortie`. `offre` est un dict (titre, entreprise,
-    lieu, url). Renvoie le chemin de sortie."""
+    lieu, url). `with_photo` : inclure la photo du profil si elle existe.
+    Renvoie le chemin de sortie."""
     s = _styles()
     doc = SimpleDocTemplate(
         str(sortie), pagesize=A4,
@@ -72,14 +97,33 @@ def build_cv(profil, offre, sortie):
         title=f"CV {profil.nom}", author=profil.nom)
     story = []
 
-    # En-tête : nom, titre, coordonnées.
-    story.append(Paragraph(_esc(profil.nom), s["nom"]))
+    # En-tête : bloc texte (nom, titre, coordonnées) à gauche, photo à droite
+    # si le profil en fournit une valide. Sans photo -> en-tête simple.
+    bloc_texte = [Paragraph(_esc(profil.nom), s["nom"])]
     if profil.titre:
-        story.append(Paragraph(_esc(profil.titre), s["titre"]))
+        bloc_texte.append(Paragraph(_esc(profil.titre), s["titre"]))
     coords = " · ".join(x for x in (profil.ville, profil.telephone,
                                     profil.email) if x)
     if coords:
-        story.append(Paragraph(_esc(coords), s["coord"]))
+        bloc_texte.append(Paragraph(_esc(coords), s["coord"]))
+
+    photo = _photo_flowable(getattr(profil, "photo", "")) if with_photo else None
+    if photo is not None:
+        # Deux colonnes : texte (large) | photo (largeur = celle de l'image,
+        # collée à la marge droite pour s'aligner avec le bandeau en dessous).
+        photo.hAlign = "RIGHT"
+        entete = Table([[bloc_texte, photo]], colWidths=[None, _PHOTO_W])
+        entete.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.append(entete)
+    else:
+        story.extend(bloc_texte)
 
     # Bandeau ciblé sur l'offre.
     cible = _ligne_cible(offre)

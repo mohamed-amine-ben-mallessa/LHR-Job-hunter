@@ -1,10 +1,12 @@
 {
   "nom": "Prénom Nom",
   "titre": "Chef de rang",
+  "photo": "assets/photo-salle.jpg",
   "email": "prenom.nom@email.fr",
   "telephone": "06 12 34 56 78",
   "ville": "Paris",
   "resume": "Professionnel de salle avec 6 ans d'expérience en brasserie et restaurant gastronomique. Sens du service, rigueur et excellent relationnel client.",
+  "mail_template": "Objet : Candidature au poste de {titre}{chez}\n\nMadame, Monsieur,\n\nJe me permets de vous adresser ma candidature pour le poste de {titre}{chez}. Vous trouverez mon CV en pièce jointe.\n\nDisponible rapidement, je serais ravi(e) d'échanger avec vous.\n\nCordialement,\n{nom}\n{telephone}",
   "experiences": [
     {
       "poste": "Chef de rang",

@@ -1,6 +1,10 @@
 # Secrets / données perso — ne jamais committer
 .env
 profil.json          # profil candidat réel (données personnelles)
+profil.barman.json   # idem (version barman)
+# Photos perso (le logo reste versionné)
+assets/photo-*.jpg
+assets/photo-*.png
 
 # Fichiers générés
 offres_24h.csv

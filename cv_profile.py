@@ -35,6 +35,7 @@ class Profil(BaseModel):
 
     nom: str
     titre: str = ""              # ex. "Chef de rang"
+    photo: str = ""              # chemin d'une photo portrait (optionnel)
     email: str = ""
     telephone: str = ""
     ville: str = ""
@@ -43,6 +44,7 @@ class Profil(BaseModel):
     formations: List[Formation] = Field(default_factory=list)
     competences: List[str] = Field(default_factory=list)
     langues: List[str] = Field(default_factory=list)
+    mail_template: str = ""      # email de candidature, variables {titre}/{entreprise}
 
 
 def load_profil(path="profil.json") -> Profil:

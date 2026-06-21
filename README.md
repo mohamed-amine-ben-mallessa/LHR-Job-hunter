@@ -161,6 +161,8 @@ python cv.py --offre 3 --metier barman    # CV barman (profil.barman.json)
 ```
 
 > Le PDF est produit par **ReportLab** (Python pur, aucune dépendance système). Ton `profil.json` reste local — il est ignoré par git (données personnelles).
+>
+> **Photo (optionnelle)** : ajoute `"photo": "assets/ta-photo.jpg"` dans ton profil pour l'afficher en haut à droite du CV (`build_cv(..., with_photo=False)` pour générer sans). **Email** : le champ `mail_template` (variables `{titre}`, `{entreprise}`, `{nom}`…) sert au brouillon d'email du bot Telegram.
 
 ### Envoyer le CV sur Telegram
 

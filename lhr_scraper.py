@@ -260,10 +260,28 @@ def parse_detail(html_text):
 _MAX_PAGES = 60
 
 
-async def _fetch_html(client, url):
-    resp = await client.get(url)
-    resp.raise_for_status()
-    return resp.text or ""
+async def _fetch_html(client, url, retries=2, backoff=1.5):
+    """Récupère le HTML d'une URL avec ré-essais.
+
+    Le site renvoie parfois un 504 ou met >20s à répondre (hoquets serveur).
+    On réessaie sur timeout / erreur réseau / 5xx, avec un petit backoff.
+    Lève la dernière exception si tous les essais échouent.
+    """
+    derniere = None
+    for tentative in range(retries + 1):
+        try:
+            resp = await client.get(url)
+            if resp.status_code >= 500:
+                raise httpx.HTTPStatusError(
+                    f"{resp.status_code}", request=resp.request, response=resp)
+            resp.raise_for_status()
+            return resp.text or ""
+        except (httpx.TimeoutException, httpx.TransportError,
+                httpx.HTTPStatusError) as e:
+            derniere = e
+            if tentative < retries:
+                await asyncio.sleep(backoff * (tentative + 1))
+    raise derniere
 
 
 async def scrape(region, metier, max_offres, delay=0.3, on_event=None):
@@ -281,11 +299,15 @@ async def scrape(region, metier, max_offres, delay=0.3, on_event=None):
     results = []
     seen = set()
     async with httpx.AsyncClient(headers=_HEADERS, follow_redirects=True,
-                                 timeout=20.0) as client:
+                                 timeout=30.0) as client:
         page = 1
         while len(results) < max_offres and page <= _MAX_PAGES:
             url = build_list_url(region, metier, page)
-            html_text = await _fetch_html(client, url)
+            try:
+                html_text = await _fetch_html(client, url)
+            except Exception as e:
+                emit(f"page {page}: échec ({type(e).__name__}), arrêt")
+                break
             if delay:
                 await asyncio.sleep(delay)
             new_cards = [c for c in parse_list_cards(html_text)
