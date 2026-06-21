@@ -10,7 +10,7 @@
 [![No browser](https://img.shields.io/badge/scraping-httpx_(no_chromium)-success)](#-pourquoi-cest-léger)
 [![Telegram](https://img.shields.io/badge/notifications-Telegram-26A5E4?logo=telegram&logoColor=white)](#-notifications-telegram)
 [![Deploy: GitHub Actions](https://img.shields.io/badge/deploy-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](#-déploiement-en-1-minute)
-[![Tests](https://img.shields.io/badge/tests-83_passing-brightgreen)](#-tests)
+[![Tests](https://img.shields.io/badge/tests-88_passing-brightgreen)](#-tests)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#-contribuer)
 
@@ -66,7 +66,7 @@ Serveur H/F — Brasserie du Coin
 | 📄 **CV PDF ciblé** | Génère un CV PDF pour une offre précise (en-tête « Candidature : … »), depuis ton profil. Sans IA, sans clé API (ReportLab). |
 | 📨 **Telegram** | Accusé immédiat + résultat + CSV joint. Messages longs auto-découpés. |
 | 🪶 **Ultra-léger** | `httpx` only — **pas de Chromium**. Tourne sur le plus petit VPS, ou gratuit sur GitHub Actions. |
-| 🧪 **Fiable** | 83 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
+| 🧪 **Fiable** | 88 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
 
 ---
 
@@ -148,9 +148,17 @@ Options :
 | Option | Défaut | Description |
 |---|---|---|
 | `--offre N` | _(requis)_ | Index 1-based de l'offre dans le scrape. |
-| `--profil F` | `profil.json` | Fichier profil candidat. |
+| `--metier M` | — | `rang`/`serveur` → `profil.json`, `barman` → `profil.barman.json`. |
+| `--profil F` | `profil.json` | Fichier profil candidat (prioritaire sur `--metier`). |
 | `--source F` | `offres_24h.json` | Fichier JSON du dernier scrape. |
 | `--sortie F` | `cv_<entreprise>.pdf` | Chemin du PDF. |
+
+Tu peux maintenir **plusieurs profils** (un par métier) et choisir au moment de générer :
+
+```bash
+python cv.py --offre 3                    # CV chef de rang (profil.json)
+python cv.py --offre 3 --metier barman    # CV barman (profil.barman.json)
+```
 
 > Le PDF est produit par **ReportLab** (Python pur, aucune dépendance système). Ton `profil.json` reste local — il est ignoré par git (données personnelles).
 
@@ -197,7 +205,7 @@ Beaucoup de scrapers embarquent un Chromium headless (~1,5 Go, 300-600 Mo de RAM
 ## 🧪 Tests
 
 ```bash
-python -m pytest -q          # 83 tests, sans réseau
+python -m pytest -q          # 88 tests, sans réseau
 ```
 
 Couvre : fenêtre 24 h, ciblage des intitulés, détection du mode de candidature (y compris « ne pas se déplacer »), extraction salaire/contrat/horaires/profil, formats de téléphone FR, validation Pydantic, formatage Telegram, génération du CV PDF.

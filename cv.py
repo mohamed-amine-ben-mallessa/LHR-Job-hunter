@@ -37,6 +37,26 @@ class OffreError(Exception):
     pass
 
 
+# Métier -> fichier profil. "rang" et "serveur" partagent le profil par défaut.
+PROFILS_METIER = {
+    "rang": "profil.json",
+    "serveur": "profil.json",
+    "barman": "profil.barman.json",
+}
+
+
+def resoudre_profil(profil_arg, metier_arg):
+    """Détermine le fichier profil à charger.
+
+    Priorité : --profil explicite > --metier > défaut (profil.json).
+    """
+    if profil_arg:
+        return profil_arg
+    if metier_arg:
+        return PROFILS_METIER[metier_arg]
+    return "profil.json"
+
+
 def charger_offre(source, index_1based):
     """Renvoie l'offre n°index_1based depuis le JSON du scrape. Lève OffreError
     avec un message clair (source absente / index hors limites)."""
@@ -63,16 +83,21 @@ def main(argv=None) -> int:
         description="Génère un CV PDF adapté à une offre du dernier scrape.")
     p.add_argument("--offre", type=int, required=True,
                    help="Index 1-based de l'offre dans le fichier de scrape.")
-    p.add_argument("--profil", default="profil.json",
-                   help="Fichier profil candidat (défaut profil.json).")
+    p.add_argument("--metier", choices=sorted(PROFILS_METIER),
+                   help="Choisit le profil selon le métier (rang|serveur -> "
+                        "profil.json ; barman -> profil.barman.json).")
+    p.add_argument("--profil", default=None,
+                   help="Fichier profil candidat (prioritaire sur --metier ; "
+                        "défaut profil.json).")
     p.add_argument("--source", default="offres_24h.json",
                    help="Fichier JSON du dernier scrape (défaut offres_24h.json).")
     p.add_argument("--sortie", default="",
                    help="Chemin du PDF (défaut cv_<entreprise>.pdf).")
     args = p.parse_args(argv)
 
+    profil_path = resoudre_profil(args.profil, args.metier)
     try:
-        profil = load_profil(args.profil)
+        profil = load_profil(profil_path)
     except ProfilError as e:
         print(f"ERREUR : {e}", file=sys.stderr)
         return 1

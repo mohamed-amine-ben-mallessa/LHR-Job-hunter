@@ -130,3 +130,23 @@ def test_build_cv_offre_sans_entreprise(tmp_path):
 def test_ligne_cible_vide_si_pas_de_titre():
     assert cv_pdf._ligne_cible({}) == ""
     assert cv_pdf._ligne_cible({"entreprise": "X"}) == ""
+
+
+# ── resoudre_profil (--metier / --profil) ────────────────────────────────────
+
+def test_resoudre_profil_defaut():
+    assert cv.resoudre_profil(None, None) == "profil.json"
+
+
+@pytest.mark.parametrize("metier,attendu", [
+    ("rang", "profil.json"),
+    ("serveur", "profil.json"),
+    ("barman", "profil.barman.json"),
+])
+def test_resoudre_profil_par_metier(metier, attendu):
+    assert cv.resoudre_profil(None, metier) == attendu
+
+
+def test_resoudre_profil_explicite_prioritaire():
+    # --profil l'emporte sur --metier.
+    assert cv.resoudre_profil("autre.json", "barman") == "autre.json"
