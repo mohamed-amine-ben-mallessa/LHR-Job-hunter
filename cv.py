@@ -16,12 +16,30 @@ if hasattr(sys.stdout, "reconfigure"):
 
 import argparse
 import json
+import os
 import re
 import unicodedata
 from pathlib import Path
 
 import cv_pdf
+import telegram_notify
 from cv_profile import ProfilError, load_profil
+
+
+def _load_dotenv():
+    """Charge un .env voisin (KEY=VALUE) sans écraser l'environnement existant."""
+    env_path = Path(__file__).resolve().parent / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 def slugify(text, defaut="cv") -> str:
@@ -37,24 +55,38 @@ class OffreError(Exception):
     pass
 
 
-# Métier -> fichier profil. "rang" et "serveur" partagent le profil par défaut.
+# Métier -> (fichier profil, variable d'env de secours). "rang" et "serveur"
+# partagent le profil par défaut. La variable d'env sert à GitHub Actions, où le
+# profil.json (ignoré par git) n'existe pas : on le fournit via un secret.
 PROFILS_METIER = {
-    "rang": "profil.json",
-    "serveur": "profil.json",
-    "barman": "profil.barman.json",
+    "rang": ("profil.json", "PROFIL_JSON"),
+    "serveur": ("profil.json", "PROFIL_JSON"),
+    "barman": ("profil.barman.json", "PROFIL_BARMAN_JSON"),
 }
 
 
 def resoudre_profil(profil_arg, metier_arg):
-    """Détermine le fichier profil à charger.
+    """Renvoie (chemin_fichier, nom_var_env) du profil à charger.
 
     Priorité : --profil explicite > --metier > défaut (profil.json).
+    `nom_var_env` est la variable de secours (secret) si le fichier manque ;
+    None pour un --profil explicite.
     """
     if profil_arg:
-        return profil_arg
+        return profil_arg, None
     if metier_arg:
         return PROFILS_METIER[metier_arg]
-    return "profil.json"
+    return "profil.json", "PROFIL_JSON"
+
+
+def materialiser_profil(path, env_var):
+    """Si `path` n'existe pas mais que la variable d'env `env_var` contient un
+    JSON, écrit ce JSON dans `path`. Permet à GitHub Actions de fournir le
+    profil via un secret. Sans effet si le fichier existe déjà."""
+    if env_var and not Path(path).exists():
+        contenu = os.environ.get(env_var, "").strip()
+        if contenu:
+            Path(path).write_text(contenu, encoding="utf-8")
 
 
 def charger_offre(source, index_1based):
@@ -93,9 +125,15 @@ def main(argv=None) -> int:
                    help="Fichier JSON du dernier scrape (défaut offres_24h.json).")
     p.add_argument("--sortie", default="",
                    help="Chemin du PDF (défaut cv_<entreprise>.pdf).")
+    p.add_argument("--telegram", action="store_true",
+                   help="Envoie le CV PDF sur le canal Telegram configuré.")
     args = p.parse_args(argv)
 
-    profil_path = resoudre_profil(args.profil, args.metier)
+    _load_dotenv()
+
+    profil_path, env_var = resoudre_profil(args.profil, args.metier)
+    # GitHub Actions : recrée le profil depuis un secret si le fichier manque.
+    materialiser_profil(profil_path, env_var)
     try:
         profil = load_profil(profil_path)
     except ProfilError as e:
@@ -114,6 +152,16 @@ def main(argv=None) -> int:
     ent = offre.get("entreprise", "")
     print(f"CV généré : {sortie}")
     print(f"  pour : {titre}" + (f" — {ent}" if ent else ""))
+
+    if args.telegram:
+        cible = f"{titre} — {ent}" if ent else titre
+        try:
+            telegram_notify.send_document(
+                sortie, caption=f"📄 CV — Candidature : {cible}")
+            print("CV envoyé sur Telegram.")
+        except telegram_notify.TelegramError as e:
+            print(f"ERREUR Telegram : {e}", file=sys.stderr)
+            return 2
     return 0
 
 

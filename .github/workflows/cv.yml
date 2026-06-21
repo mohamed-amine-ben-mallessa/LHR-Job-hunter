@@ -1,0 +1,70 @@
+name: Générer un CV -> Telegram
+
+# Déclenchement MANUEL uniquement (onglet Actions -> Run workflow).
+# Tu choisis le n° d'offre et le métier ; le CV est généré et envoyé sur Telegram.
+#
+# Pré-requis (Settings -> Secrets and variables -> Actions) :
+#   - TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+#   - PROFIL_JSON          : le contenu de ton profil.json (chef de rang / serveur)
+#   - PROFIL_BARMAN_JSON    : (optionnel) le contenu de ton profil.barman.json
+on:
+  workflow_dispatch:
+    inputs:
+      offre:
+        description: "Numéro de l'offre (1 = la plus récente du dernier scrape)"
+        required: true
+        default: "1"
+      metier:
+        description: "Métier (rang, serveur ou barman)"
+        required: true
+        default: "rang"
+        type: choice
+        options: [rang, serveur, barman]
+      heures:
+        description: "Fenêtre de fraîcheur du scrape (heures)"
+        required: false
+        default: "48"
+
+permissions:
+  contents: read
+
+jobs:
+  cv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      # Le scrape produit offres_24h.json, indispensable pour choisir une offre.
+      - name: Scraper les offres récentes
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scrape_24h.py --heures "${{ github.event.inputs.heures }}"
+
+      - name: Générer et envoyer le CV
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PROFIL_JSON: ${{ secrets.PROFIL_JSON }}
+          PROFIL_BARMAN_JSON: ${{ secrets.PROFIL_BARMAN_JSON }}
+        run: |
+          python cv.py --offre "${{ github.event.inputs.offre }}" \
+                       --metier "${{ github.event.inputs.metier }}" \
+                       --telegram
+
+      - name: Archiver le CV (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cv
+          path: cv_*.pdf
+          if-no-files-found: ignore
+          retention-days: 14

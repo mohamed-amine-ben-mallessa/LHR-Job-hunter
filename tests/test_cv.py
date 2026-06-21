@@ -135,7 +135,7 @@ def test_ligne_cible_vide_si_pas_de_titre():
 # ── resoudre_profil (--metier / --profil) ────────────────────────────────────
 
 def test_resoudre_profil_defaut():
-    assert cv.resoudre_profil(None, None) == "profil.json"
+    assert cv.resoudre_profil(None, None)[0] == "profil.json"
 
 
 @pytest.mark.parametrize("metier,attendu", [
@@ -144,9 +144,26 @@ def test_resoudre_profil_defaut():
     ("barman", "profil.barman.json"),
 ])
 def test_resoudre_profil_par_metier(metier, attendu):
-    assert cv.resoudre_profil(None, metier) == attendu
+    assert cv.resoudre_profil(None, metier)[0] == attendu
 
 
 def test_resoudre_profil_explicite_prioritaire():
     # --profil l'emporte sur --metier.
-    assert cv.resoudre_profil("autre.json", "barman") == "autre.json"
+    chemin, env_var = cv.resoudre_profil("autre.json", "barman")
+    assert chemin == "autre.json" and env_var is None
+
+
+def test_materialiser_profil_depuis_env(tmp_path, monkeypatch):
+    # Si le fichier manque mais la variable d'env contient le JSON -> écrit.
+    cible = tmp_path / "p.json"
+    monkeypatch.setenv("PROFIL_TEST", '{"nom": "Depuis Secret"}')
+    cv.materialiser_profil(str(cible), "PROFIL_TEST")
+    assert cible.exists() and "Depuis Secret" in cible.read_text(encoding="utf-8")
+
+
+def test_materialiser_profil_nexcrase_pas(tmp_path, monkeypatch):
+    cible = tmp_path / "p.json"
+    cible.write_text('{"nom": "Original"}', encoding="utf-8")
+    monkeypatch.setenv("PROFIL_TEST", '{"nom": "Secret"}')
+    cv.materialiser_profil(str(cible), "PROFIL_TEST")
+    assert "Original" in cible.read_text(encoding="utf-8")  # pas écrasé

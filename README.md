@@ -10,7 +10,7 @@
 [![No browser](https://img.shields.io/badge/scraping-httpx_(no_chromium)-success)](#-pourquoi-cest-léger)
 [![Telegram](https://img.shields.io/badge/notifications-Telegram-26A5E4?logo=telegram&logoColor=white)](#-notifications-telegram)
 [![Deploy: GitHub Actions](https://img.shields.io/badge/deploy-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](#-déploiement-en-1-minute)
-[![Tests](https://img.shields.io/badge/tests-88_passing-brightgreen)](#-tests)
+[![Tests](https://img.shields.io/badge/tests-90_passing-brightgreen)](#-tests)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#-contribuer)
 
@@ -66,7 +66,7 @@ Serveur H/F — Brasserie du Coin
 | 📄 **CV PDF ciblé** | Génère un CV PDF pour une offre précise (en-tête « Candidature : … »), depuis ton profil. Sans IA, sans clé API (ReportLab). |
 | 📨 **Telegram** | Accusé immédiat + résultat + CSV joint. Messages longs auto-découpés. |
 | 🪶 **Ultra-léger** | `httpx` only — **pas de Chromium**. Tourne sur le plus petit VPS, ou gratuit sur GitHub Actions. |
-| 🧪 **Fiable** | 88 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
+| 🧪 **Fiable** | 90 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
 
 ---
 
@@ -162,6 +162,28 @@ python cv.py --offre 3 --metier barman    # CV barman (profil.barman.json)
 
 > Le PDF est produit par **ReportLab** (Python pur, aucune dépendance système). Ton `profil.json` reste local — il est ignoré par git (données personnelles).
 
+### Envoyer le CV sur Telegram
+
+Ajoute `--telegram` pour recevoir le PDF directement sur ton canal :
+
+```bash
+python cv.py --offre 3 --metier barman --telegram
+```
+
+### Depuis GitHub Actions (à distance, sans ton PC)
+
+Le workflow [`cv.yml`](.github/workflows/cv.yml) se lance **à la demande** (onglet **Actions → Générer un CV → Run workflow**) : tu saisis le n° d'offre et le métier, le CV est généré et envoyé sur Telegram.
+
+Comme `profil.json` est local (ignoré par git), fournis-le à GitHub via des secrets :
+
+| Secret | Contenu |
+|---|---|
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | comme pour le scrape |
+| `PROFIL_JSON` | colle tout le contenu de ton `profil.json` |
+| `PROFIL_BARMAN_JSON` | _(optionnel)_ contenu de `profil.barman.json` |
+
+> ⚠️ Mettre ton profil dans un secret GitHub stocke tes données perso chez GitHub (chiffrées). Si tu préfères les garder 100 % privées, génère le CV **en local** (`--telegram`) plutôt que via Actions.
+
 ---
 
 ## 🤖 Déploiement en 1 minute
@@ -205,7 +227,7 @@ Beaucoup de scrapers embarquent un Chromium headless (~1,5 Go, 300-600 Mo de RAM
 ## 🧪 Tests
 
 ```bash
-python -m pytest -q          # 88 tests, sans réseau
+python -m pytest -q          # 90 tests, sans réseau
 ```
 
 Couvre : fenêtre 24 h, ciblage des intitulés, détection du mode de candidature (y compris « ne pas se déplacer »), extraction salaire/contrat/horaires/profil, formats de téléphone FR, validation Pydantic, formatage Telegram, génération du CV PDF.
