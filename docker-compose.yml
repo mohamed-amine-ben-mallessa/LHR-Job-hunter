@@ -1,0 +1,13 @@
+# Option Docker. Le conteneur fait un run unique puis s'arrête.
+# Déclencher 1x/jour via le cron de l'hôte (voir README), p.ex. :
+#   0 9 * * *  cd /opt/offres-salle-24h && docker compose run --rm scraper
+services:
+  scraper:
+    build: .
+    env_file:
+      - .env
+    # Sortie CSV/JSON persistée sur l'hôte (facultatif).
+    volumes:
+      - ./out:/app/out
+    command: ["--telegram", "--sortie", "out/offres_24h"]
+    restart: "no"

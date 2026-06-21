@@ -1,0 +1,16 @@
+# Secrets — ne jamais committer
+.env
+
+# Fichiers générés
+offres_24h.csv
+offres_24h.json
+*.csv
+*.json
+out/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

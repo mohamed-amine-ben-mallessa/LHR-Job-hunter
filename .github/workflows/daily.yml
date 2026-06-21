@@ -1,0 +1,52 @@
+name: Daily jobs -> Telegram
+
+# Déclenchement automatique 2x/jour + bouton manuel.
+# IMPORTANT : le cron GitHub Actions est en UTC et ne gère pas l'heure d'été.
+#   07:00 UTC = 09:00 Paris (été, UTC+2) / 08:00 Paris (hiver, UTC+1)
+#   16:00 UTC = 18:00 Paris (été)        / 17:00 Paris (hiver)
+# Le léger décalage saisonnier d'1h est sans impact pour un envoi quotidien.
+# Note : GitHub peut retarder un run planifié de quelques minutes (file partagée).
+on:
+  schedule:
+    - cron: "0 7 * * *"    # matin
+    - cron: "0 16 * * *"   # soir
+  workflow_dispatch:
+    inputs:
+      heures:
+        description: "Fenêtre de fraîcheur (heures)"
+        default: "24"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  scrape-et-notifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Scraper et envoyer sur Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scrape_24h.py --telegram --heures "${{ github.event.inputs.heures || '24' }}"
+
+      - name: Archiver le CSV/JSON (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offres-24h
+          path: |
+            offres_24h.csv
+            offres_24h.json
+          if-no-files-found: ignore
+          retention-days: 14

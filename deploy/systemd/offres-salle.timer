@@ -1,0 +1,13 @@
+[Unit]
+Description=Déclenche offres-salle.service chaque jour
+
+[Timer]
+# Tous les jours à 09:00, heure locale du serveur. Modifier au besoin.
+OnCalendar=*-*-* 09:00:00
+# Si le serveur était éteint à l'heure prévue, rattrape au démarrage.
+Persistent=true
+# Petit délai aléatoire pour ne pas taper le site à la seconde pile.
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

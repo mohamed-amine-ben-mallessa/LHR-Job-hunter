@@ -1,0 +1,212 @@
+<div align="center">
+
+<img src="assets/lhr-logo.png" alt="L'Hôtellerie Restauration" height="72" />
+
+# 🍽️ LHR Job Hunter
+
+**Reçois chaque jour sur Telegram les offres _fraîches_ (≤ 24 h) de serveur, chef de rang & barman en Île-de-France — avec téléphone, email et mode de candidature déjà extraits.**
+
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![No browser](https://img.shields.io/badge/scraping-httpx_(no_chromium)-success)](#-pourquoi-cest-léger)
+[![Telegram](https://img.shields.io/badge/notifications-Telegram-26A5E4?logo=telegram&logoColor=white)](#-notifications-telegram)
+[![Deploy: GitHub Actions](https://img.shields.io/badge/deploy-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](#-déploiement-en-1-minute)
+[![Tests](https://img.shields.io/badge/tests-40_passing-brightgreen)](#-tests)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#-contribuer)
+
+<sub>⭐ <b>Si ça t'épargne d'ouvrir 40 annonces à la main, mets une étoile</b> — ça aide vraiment.</sub>
+
+</div>
+
+---
+
+## 😩 Le problème
+
+Les bons postes en salle partent en **quelques heures**. Quand tu vois l'annonce le lendemain, c'est déjà pourvu. Et même quand tu la vois à temps, il faut :
+
+- ouvrir chaque offre une par une,
+- chercher le **06/07** ou l'**email** noyés dans la description (souvent _masqués_ par le site),
+- deviner s'il faut **postuler par mail** ou **se présenter avec un CV**.
+
+## ✨ La solution
+
+**LHR Job Hunter** scanne [lhotellerie-restauration.fr](https://www.lhotellerie-restauration.fr) **2× par jour**, garde uniquement les offres **publiées il y a moins de 24 h**, et t'envoie un message Telegram clé en main :
+
+```
+🍽️ Offres Salle/Bar Île-de-France (4 offres, <24h) — 21/06/2026
+
+Chef de rang H/F — Quai Ouest
+92 - Boulogne | 20/06/2026 à 08:33
+📞 06 81 77 46 26 | 🧭 telephone
+💶 2000 EUR/mois
+→ Voir l'offre
+
+Serveur H/F — Brasserie du Coin
+75 - PARIS 5 | 20/06/2026 à 14:19
+✉️ recrutement@exemple-resto.fr | 🧭 sur place
+→ Voir l'offre
+```
+
+📎 Le **CSV complet est joint** au message (ouvrable dans Excel).
+
+---
+
+## 🚀 Fonctionnalités
+
+| | |
+|---|---|
+| ⏱️ **Filtre 24 h** | Uniquement les offres fraîchement publiées — fini les annonces déjà pourvues. |
+| 🎯 **Ciblage métier** | Serveur · serveuse · chef de rang · barman/barmaid · runner · commis de salle. Cuisine & encadrement exclus automatiquement. |
+| 📞 **Téléphone & email** | Extraits, normalisés et **validés** — y compris les emails _masqués_ par le site. |
+| 🧭 **Mode de candidature** | Détecte `sur place` (déplacement avec CV), `email`, `téléphone` ou `non précisé`. |
+| 📨 **Telegram** | Accusé immédiat + résultat + CSV joint. Messages longs auto-découpés. |
+| 🪶 **Ultra-léger** | `httpx` only — **pas de Chromium**. Tourne sur le plus petit VPS, ou gratuit sur GitHub Actions. |
+| 🧪 **Fiable** | 40 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
+
+---
+
+## 🎯 Cas d'usage
+
+- **🧑‍🍳 Extra / candidat** — sois le **premier** à appeler quand une annonce tombe. Le contact est déjà dans ton Telegram.
+- **🏢 Agence d'intérim / placement** — un flux quotidien qualifié de postes de salle en IDF, exportable en CSV pour ton CRM.
+- **📊 Veille marché RH** — suis le volume et les salaires des offres de service en temps quasi réel.
+- **🤖 Brique d'automatisation** — branche le CSV/JSON sur n8n, un Google Sheet, ou ton propre pipeline.
+
+---
+
+## ⚡ Démarrage rapide
+
+```bash
+git clone https://github.com/mohamed-amine-ben-mallessa/LHR-Job-hunter.git
+cd LHR-Job-hunter
+pip install -r requirements.txt
+
+# Génère offres_24h.csv + offres_24h.json
+python scrape_24h.py
+
+# …et envoie-les sur Telegram
+python scrape_24h.py --telegram
+```
+
+> Pas de navigateur à installer, pas de clé API payante. Juste Python.
+
+### Options
+
+| Option | Défaut | Description |
+|---|---|---|
+| `--max N` | `120` | Nombre max d'offres parcourues. |
+| `--heures H` | `24` | Fenêtre de fraîcheur (heures). |
+| `--sortie PREFIXE` | `offres_24h` | Préfixe des fichiers de sortie. |
+| `--telegram` | _off_ | Envoie sur le canal Telegram configuré. |
+
+```bash
+python scrape_24h.py --heures 48 --max 200      # fenêtre élargie
+python scrape_24h.py --sortie offres_2026-06-21 # archivage daté
+```
+
+---
+
+## 📨 Notifications Telegram
+
+Avec `--telegram`, tu reçois **deux messages** : un accusé ⏳ immédiat (signe de vie même si le scan est lent), puis 🍽️ le résultat **avec le CSV joint**.
+
+**Configuration** — copie `.env.example` en `.env` :
+
+```env
+TELEGRAM_BOT_TOKEN=123456789:AA...   # via @BotFather
+TELEGRAM_CHAT_ID=@mon_canal          # ou un id -100… pour un canal privé
+```
+
+Le bot doit être **administrateur** du canal pour y poster.
+
+---
+
+## 🤖 Déploiement en 1 minute
+
+### GitHub Actions — gratuit, zéro serveur _(recommandé)_
+
+1. **Fork** ou clone ce repo sur ton compte.
+2. **Settings → Secrets and variables → Actions** → ajoute `TELEGRAM_BOT_TOKEN` et `TELEGRAM_CHAT_ID`.
+3. C'est tout. Le workflow [`daily.yml`](.github/workflows/daily.yml) tourne **2× par jour** (matin + soir) et tu peux le lancer à la main via l'onglet **Actions**.
+
+> Le cron GitHub est en **UTC** (07:00 & 16:00 = 09:00/18:00 Paris l'été). Modifie les lignes `cron:` pour changer l'heure.
+
+### Docker — pour héberger toi-même
+
+```bash
+docker compose run --rm scraper
+```
+
+Automatise via le cron de l'hôte :
+
+```cron
+0 9 * * *  cd /opt/LHR-Job-hunter && docker compose run --rm scraper
+```
+
+Image légère (~150 Mo, sans navigateur). Une alternative **systemd** (timer + `deploy.sh`) est fournie dans [`deploy/`](deploy/).
+
+---
+
+## 🪶 Pourquoi c'est léger
+
+Beaucoup de scrapers embarquent un Chromium headless (~1,5 Go, 300-600 Mo de RAM). Ici, **le contenu des offres est dans le JSON-LD du HTML statique** : un simple `httpx.get` suffit.
+
+| | Scraper navigateur | **LHR Job Hunter** |
+|---|---|---|
+| Image | ~1,5 Go | **~150 Mo** |
+| RAM / run | 300-600 Mo | **~30-50 Mo** |
+| Vitesse | ~2-3 s/offre | **~0,3 s/offre** |
+
+---
+
+## 🧪 Tests
+
+```bash
+python -m pytest -q          # 40 tests, sans réseau
+```
+
+Couvre : fenêtre 24 h, ciblage des intitulés, détection du mode de candidature, validation Pydantic, formatage Telegram.
+
+---
+
+## 🗂️ Structure
+
+```
+LHR-Job-hunter/
+├── scrape_24h.py        # CLI — point d'entrée
+├── lhr_scraper.py       # scraping httpx (JSON-LD), autonome
+├── extract.py           # filtres 24h / métier + détection candidature
+├── models.py            # schémas Pydantic (validation)
+├── telegram_notify.py   # envoi des offres + CSV sur Telegram
+├── .github/workflows/   # cron quotidien GitHub Actions
+├── deploy/              # systemd (timer + deploy.sh)
+├── Dockerfile · docker-compose.yml
+└── tests/
+```
+
+---
+
+## 🤝 Contribuer
+
+PRs bienvenues — nouveaux métiers, autres régions, autres canaux (Slack, Discord, email)… Ouvre une *issue* pour discuter d'une idée.
+
+---
+
+## ⚠️ Disclaimer
+
+> **Projet indépendant, non affilié** à L'Hôtellerie Restauration ni à aucun éditeur de site d'emploi. Le logo affiché est la propriété de **L'Hôtellerie Restauration** et n'est utilisé qu'à des fins d'identification de la source des données ; aucune affiliation ni approbation n'est sous-entendue.
+>
+> Cet outil interroge un site web public à des fins de **veille d'emploi personnelle**. En l'utilisant, **tu es seul responsable** :
+> - du respect des **Conditions Générales d'Utilisation** du site cible (scraping, fréquence, robots.txt),
+> - du respect du **RGPD** pour toute donnée de contact collectée (finalité, conservation limitée, information des personnes, pas de démarchage non sollicité),
+> - de ne pas surcharger le site (l'outil temporise volontairement entre les requêtes).
+>
+> Fourni **« en l'état », sans garantie**. La structure du site peut changer à tout moment et casser l'extraction. À n'utiliser **que** dans le cadre d'une recherche d'emploi légitime.
+
+---
+
+## 📄 Licence
+
+[MIT](LICENSE) — fais-en bon usage.
+
+<div align="center"><sub>Si ce projet t'a aidé à décrocher un poste, ⭐ le repo et raconte-le en issue. 🍀</sub></div>

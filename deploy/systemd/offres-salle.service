@@ -1,0 +1,12 @@
+[Unit]
+Description=Offres Salle/Bar IDF 24h -> Telegram (oneshot)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Adapter le chemin si l'app n'est pas dans /opt/offres-salle-24h
+WorkingDirectory=/opt/offres-salle-24h
+EnvironmentFile=/opt/offres-salle-24h/.env
+ExecStart=/opt/offres-salle-24h/.venv/bin/python scrape_24h.py --telegram
+# Pas de redémarrage : un oneshot qui échoue sera relancé au prochain tick du timer.
