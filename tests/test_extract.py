@@ -8,9 +8,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from extract import (MARQUEUR_SANS_DATE, detect_candidature, is_within_24h,
-                     matches_metier, parse_datetime_fr)
+from extract import (MARQUEUR_SANS_DATE, detect_candidature, extract_contrat,
+                     extract_heures, extract_profil, extract_salaire,
+                     is_within_24h, matches_metier, parse_datetime_fr,
+                     refuse_deplacement)
 from models import Offre
+import lhr_scraper
 
 
 # ── parse_datetime_fr ────────────────────────────────────────────────────────
@@ -116,6 +119,33 @@ def test_candidature_venez_rejoindre_pas_sur_place():
     assert detect_candidature(d, "contact@resto.fr", "") == "email"
 
 
+def test_candidature_passez_nous_rencontrer():
+    # Cas réel raté avant : "passez directement nous rencontrer au café".
+    d = "Candidature : ou passez directement nous rencontrer au café !"
+    assert detect_candidature(d, "x@y.fr", "") == "sur place"
+
+
+def test_candidature_venez_nous_voir():
+    assert detect_candidature("Venez nous voir au restaurant", "", "") == "sur place"
+
+
+def test_candidature_negation_force_email():
+    # "Ne pas se déplacer" NE doit PAS donner "sur place".
+    d = "Candidatures uniquement par mail. Ne pas téléphoner ni se déplacer."
+    assert detect_candidature(d, "x@y.fr", "06 81 77 46 26") == "email+telephone"
+    assert refuse_deplacement(d) is True
+
+
+def test_candidature_negation_meme_avec_formule_deplacement():
+    # Même si une formule de déplacement traîne, la négation prime.
+    d = "Se présenter… non : ne pas se déplacer, candidature uniquement par mail."
+    assert detect_candidature(d, "x@y.fr", "") == "email"
+
+
+def test_refuse_deplacement_faux_quand_absent():
+    assert refuse_deplacement("Venez nous rencontrer au café") is False
+
+
 def test_candidature_email_seul():
     assert detect_candidature("Envoyer votre CV", "x@y.fr", "") == "email"
 
@@ -169,7 +199,8 @@ def test_offre_row_ordre_colonnes():
     row = o.row()
     assert list(row.keys()) == [
         "titre", "entreprise", "lieu", "code_postal", "date_heure",
-        "telephone", "email", "candidature", "salaire", "url",
+        "telephone", "email", "candidature", "note", "contrat", "salaire",
+        "heures", "profil", "url",
     ]
 
 
@@ -210,3 +241,94 @@ def test_tg_send_document_fichier_absent_ne_leve_pas():
     # Best-effort : un chemin inexistant renvoie False sans appeler le réseau.
     assert tg.send_document("/chemin/inexistant.csv",
                             token="x", chat_id="y") is False
+
+
+def test_tg_format_offre_affiche_nouveaux_champs():
+    o = Offre(titre="Serveur H/F", candidature="email", contrat="CDI",
+              salaire="2000€ net", heures="39h hebdo",
+              profil="Expérimenté, dynamique", url="https://x/1")
+    bloc = tg.format_offre(o)
+    assert "CDI" in bloc and "39h hebdo" in bloc
+    assert "2000€ net" in bloc and "Profil" in bloc
+
+
+# ── extract_salaire ──────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("desc,doit_contenir", [
+    ("De 1700€ à 2100€ net mensuel", "1700€"),
+    ("Rémunération : 2 700 € net par mois", "2 700 €"),
+    ("à partir de 2000€ nets, ajustable", "2000€"),
+    ("Salaire entre 2 500 & 2 800€ Net selon", "2 800€"),
+])
+def test_extract_salaire(desc, doit_contenir):
+    out = extract_salaire(desc)
+    assert "€" in out and doit_contenir in out
+
+
+def test_extract_salaire_aucun():
+    assert extract_salaire("Poste sympa, équipe au top.") == ""
+
+
+# ── extract_heures ───────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("desc,attendu", [
+    ("temps complet 169H mensuel, service", "169H mensuel"),
+    ("Serveur 30H par semaine", "30H par semaine"),
+    ("CDI, 39 Heures hebdo, journées", "39 Heures hebdo"),
+])
+def test_extract_heures(desc, attendu):
+    assert extract_heures(desc) == attendu
+
+
+def test_extract_heures_ignore_horaire_service():
+    # "7h/16h" est une plage horaire, pas un volume -> pas capturé.
+    assert extract_heures("service le matin 7h/16h (+/-1h)") == ""
+
+
+# ── extract_contrat ──────────────────────────────────────────────────────────
+
+def test_extract_contrat_cdi():
+    assert extract_contrat("Poste en CDI à pourvoir") == "CDI"
+
+
+def test_extract_contrat_multiple():
+    out = extract_contrat("Contrat : CDI / CDD/ saisonnier")
+    assert "CDI" in out and "CDD" in out and "Saisonnier" in out
+
+
+def test_extract_contrat_aucun():
+    assert extract_contrat("Rejoignez notre équipe !") == ""
+
+
+# ── extract_profil ───────────────────────────────────────────────────────────
+
+def test_extract_profil_section():
+    desc = ("Missions : servir.\nProfil recherché :\n"
+            "Expérience exigée\nBonne présentation\n"
+            "Conditions :\nCDI")
+    out = extract_profil(desc)
+    assert "Expérience exigée" in out and "Bonne présentation" in out
+    assert "Conditions" not in out  # coupé au prochain en-tête
+
+
+def test_extract_profil_absent():
+    assert extract_profil("Description sans section profil.") == ""
+
+
+# ── téléphone : formats variés (lhr_scraper) ─────────────────────────────────
+
+@pytest.mark.parametrize("texte,attendu", [
+    ("Appelez le 06 81 77 46 26", "06 81 77 46 26"),
+    ("tel 06.81.77.46.26", "06 81 77 46 26"),
+    ("au 06-81-77-46-26", "06 81 77 46 26"),
+    ("direct 0681774626 svp", "06 81 77 46 26"),
+    ("au +33 6 81 77 46 26", "06 81 77 46 26"),
+    ("fixe 01 43 29 88 27", "01 43 29 88 27"),
+])
+def test_phone_formats_varies(texte, attendu):
+    assert lhr_scraper._first_phone(texte) == attendu
+
+
+def test_phone_rejette_faux_positifs():
+    assert lhr_scraper._first_phone("prix 1596.40 euros") == ""
+    assert lhr_scraper._first_phone("SIRET 12345678901234") == ""

@@ -4,13 +4,13 @@
 
 # 🍽️ LHR Job Hunter
 
-**Reçois chaque jour sur Telegram les offres _fraîches_ (≤ 24 h) de serveur, chef de rang & barman en Île-de-France — avec téléphone, email et mode de candidature déjà extraits.**
+**Reçois chaque jour sur Telegram les offres _fraîches_ (≤ 24 h) de serveur, chef de rang & barman en Île-de-France — téléphone, email, salaire, contrat, horaires et mode de candidature déjà extraits.**
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![No browser](https://img.shields.io/badge/scraping-httpx_(no_chromium)-success)](#-pourquoi-cest-léger)
 [![Telegram](https://img.shields.io/badge/notifications-Telegram-26A5E4?logo=telegram&logoColor=white)](#-notifications-telegram)
 [![Deploy: GitHub Actions](https://img.shields.io/badge/deploy-GitHub_Actions-2088FF?logo=githubactions&logoColor=white)](#-déploiement-en-1-minute)
-[![Tests](https://img.shields.io/badge/tests-40_passing-brightgreen)](#-tests)
+[![Tests](https://img.shields.io/badge/tests-67_passing-brightgreen)](#-tests)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#-contribuer)
 
@@ -38,12 +38,15 @@ Les bons postes en salle partent en **quelques heures**. Quand tu vois l'annonce
 Chef de rang H/F — Quai Ouest
 92 - Boulogne | 20/06/2026 à 08:33
 📞 06 81 77 46 26 | 🧭 telephone
-💶 2000 EUR/mois
+📄 CDI | ⏱️ 39h hebdo
+💶 De 1900€ à 2200€ net mensuel
+👤 Profil : Expérience en brasserie, maîtrise du port de plateau, anglais courant
 → Voir l'offre
 
 Serveur H/F — Brasserie du Coin
 75 - PARIS 5 | 20/06/2026 à 14:19
 ✉️ recrutement@exemple-resto.fr | 🧭 sur place
+📄 CDD / Saisonnier
 → Voir l'offre
 ```
 
@@ -57,11 +60,12 @@ Serveur H/F — Brasserie du Coin
 |---|---|
 | ⏱️ **Filtre 24 h** | Uniquement les offres fraîchement publiées — fini les annonces déjà pourvues. |
 | 🎯 **Ciblage métier** | Serveur · serveuse · chef de rang · barman/barmaid · runner · commis de salle. Cuisine & encadrement exclus automatiquement. |
-| 📞 **Téléphone & email** | Extraits, normalisés et **validés** — y compris les emails _masqués_ par le site. |
-| 🧭 **Mode de candidature** | Détecte `sur place` (déplacement avec CV), `email`, `téléphone` ou `non précisé`. |
+| 📞 **Téléphone & email** | Extraits, normalisés et **validés** — tous formats FR (`06`/`07`/`01`, avec ou sans espaces, `.`/`-`, `+33`…), y compris les emails _masqués_ par le site. |
+| 🧭 **Mode de candidature** | Détecte `sur place` (déplacement avec CV), `email`, `téléphone` ou `non précisé`. Repère aussi les consignes **« ne pas se déplacer »** (⚠️) pour t'éviter un déplacement inutile. |
+| 💶 **Salaire, contrat, horaires, profil** | Extraits depuis l'annonce : salaire en clair (`De 1700€ à 2100€ net`, `35,9K€`…), type de contrat (CDI/CDD/Extra…), volume horaire (`169H mensuel`, `39h hebdo`) et la section **Profil recherché**. |
 | 📨 **Telegram** | Accusé immédiat + résultat + CSV joint. Messages longs auto-découpés. |
 | 🪶 **Ultra-léger** | `httpx` only — **pas de Chromium**. Tourne sur le plus petit VPS, ou gratuit sur GitHub Actions. |
-| 🧪 **Fiable** | 40 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
+| 🧪 **Fiable** | 67 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
 
 ---
 
@@ -162,10 +166,10 @@ Beaucoup de scrapers embarquent un Chromium headless (~1,5 Go, 300-600 Mo de RAM
 ## 🧪 Tests
 
 ```bash
-python -m pytest -q          # 40 tests, sans réseau
+python -m pytest -q          # 67 tests, sans réseau
 ```
 
-Couvre : fenêtre 24 h, ciblage des intitulés, détection du mode de candidature, validation Pydantic, formatage Telegram.
+Couvre : fenêtre 24 h, ciblage des intitulés, détection du mode de candidature (y compris « ne pas se déplacer »), extraction salaire/contrat/horaires/profil, formats de téléphone FR, validation Pydantic, formatage Telegram.
 
 ---
 

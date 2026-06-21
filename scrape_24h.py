@@ -23,8 +23,10 @@ from datetime import datetime
 
 import lhr_scraper
 import telegram_notify
-from extract import (MARQUEUR_SANS_DATE, detect_candidature, is_within_24h,
-                     matches_metier, parse_datetime_fr)
+from extract import (MARQUEUR_SANS_DATE, detect_candidature, extract_contrat,
+                     extract_heures, extract_profil, extract_salaire,
+                     is_within_24h, matches_metier, parse_datetime_fr,
+                     refuse_deplacement)
 from models import COLUMNS, Offre
 
 REGION = "ile-de-france"
@@ -66,8 +68,12 @@ def _filet_coordonnees(offre: dict):
 
 def _to_offre(raw: dict, date_affichee: str) -> Offre:
     """Construit un Offre Pydantic (validé) depuis l'offre brute scrapée."""
-    candidature = detect_candidature(
-        raw.get("description", ""), raw.get("email", ""), raw.get("telephone", ""))
+    desc = raw.get("description", "")
+    candidature = detect_candidature(desc, raw.get("email", ""),
+                                     raw.get("telephone", ""))
+    # Salaire : priorité au JSON-LD s'il existe, sinon extraction du texte.
+    salaire = raw.get("salaire", "") or extract_salaire(desc)
+    note = "ne pas se déplacer" if refuse_deplacement(desc) else ""
     return Offre(
         titre=raw.get("titre", ""),
         entreprise=raw.get("entreprise", ""),
@@ -77,7 +83,11 @@ def _to_offre(raw: dict, date_affichee: str) -> Offre:
         telephone=raw.get("telephone", ""),
         email=raw.get("email", ""),
         candidature=candidature,
-        salaire=raw.get("salaire", ""),
+        note=note,
+        contrat=extract_contrat(desc),
+        salaire=salaire,
+        heures=extract_heures(desc),
+        profil=extract_profil(desc),
         url=raw.get("url", ""),
     )
 

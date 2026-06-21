@@ -13,7 +13,8 @@ from pydantic import BaseModel, field_validator
 # Colonnes de sortie, dans l'ordre (CSV + clés JSON).
 COLUMNS = [
     "titre", "entreprise", "lieu", "code_postal", "date_heure",
-    "telephone", "email", "candidature", "salaire", "url",
+    "telephone", "email", "candidature", "note", "contrat", "salaire",
+    "heures", "profil", "url",
 ]
 
 Candidature = Literal[
@@ -40,7 +41,11 @@ class Offre(BaseModel):
     telephone: str = ""           # 10 chiffres FR formatés, sinon ""
     email: str = ""               # format email valide, sinon ""
     candidature: Candidature = "non precise"
+    note: str = ""                # ex. "ne pas se déplacer" (consigne de l'annonce)
+    contrat: str = ""             # ex. "CDI", "CDD / Saisonnier"
     salaire: str = ""
+    heures: str = ""              # ex. "169H mensuel", "39h hebdo"
+    profil: str = ""              # texte de la section "Profil recherché"
     url: str
 
     @field_validator("telephone")

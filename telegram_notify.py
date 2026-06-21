@@ -38,8 +38,20 @@ def format_offre(o) -> str:
         contact.append(f"✉️ {_escape(o.email)}")
     contact.append(f"🧭 {o.candidature}")
     lignes.append(" | ".join(contact))
+    if o.note:
+        lignes.append(f"⚠️ {_escape(o.note)}")
+    # Ligne contrat / horaires (regroupés s'ils existent).
+    ch = []
+    if o.contrat:
+        ch.append(f"📄 {_escape(o.contrat)}")
+    if o.heures:
+        ch.append(f"⏱️ {_escape(o.heures)}")
+    if ch:
+        lignes.append(" | ".join(ch))
     if o.salaire:
         lignes.append(f"💶 {_escape(o.salaire)}")
+    if o.profil:
+        lignes.append(f"👤 <b>Profil :</b> {_escape(o.profil)}")
     lignes.append(f'<a href="{_escape(o.url)}">Voir l\'offre</a>')
     return "\n".join(lignes)
 

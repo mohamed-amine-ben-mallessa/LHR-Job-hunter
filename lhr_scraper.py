@@ -84,9 +84,18 @@ _LOGO_IMG_RE = re.compile(r'<img[^>]*class="[^"]*logo-job[^"]*"[^>]*src="([^"]+)
 _EMAIL_RE = re.compile(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}')
 _EMAIL_SKIP = ("lhotellerie-restauration", "sentry", "example.", "@2x", ".png",
                ".jpg", ".jpeg", ".gif", ".webp", ".svg")
-# Téléphone FR : 06/07/01..., +33/0033, séparateurs espace/./- (ou collé).
+# Téléphone FR. Couvre :
+#   - 06 81 77 46 26 / 06.81.77.46.26 / 06-81-77-46-26 / 0681774626 (collé)
+#   - +33 6 81 77 46 26 / 0033 6 81 ... / +33681774626
+#   - séparateurs mélangés, espaces insécables ( ), slash, point médian.
+# On exige une frontière (pas un chiffre) avant/après pour éviter d'attraper un
+# fragment au milieu d'un nombre plus long (prix, SIRET…).
+_PHONE_SEP = r'[\s.  /·-]*'
 _PHONE_RE = re.compile(
-    r'(?:(?:\+33|0033)\s*[1-9]|0[1-9])(?:[\s.\-]*\d{2}){4}')
+    r'(?<!\d)'
+    r'(?:(?:\+33|0033)' + _PHONE_SEP + r'[1-9]|0[1-9])'
+    r'(?:' + _PHONE_SEP + r'\d{2}){4}'
+    r'(?!\d)')
 
 # Email obfusqué LHR : chaque lettre dans un <span class=icon2X>.
 _ICON2_SPAN_RE = re.compile(r'<span[^>]*class="?icon2([a-z]+)"?[^>]*>\s*</span>', re.I)
