@@ -1,8 +1,10 @@
 <div align="center">
 
-<img src="assets/lhr-logo.png" alt="L'Hôtellerie Restauration" height="72" />
+<img src="assets/bot-logo.png" alt="LHR Job Hunter" height="140" />
 
 # 🍽️ LHR Job Hunter
+
+<sub>Données issues de <img src="assets/lhr-logo.png" alt="L'Hôtellerie Restauration" height="20" /> — projet indépendant, non affilié</sub>
 
 **Reçois chaque jour sur Telegram les offres _fraîches_ (≤ 24 h) de serveur, chef de rang & barman en Île-de-France — téléphone, email, salaire, contrat, horaires et mode de candidature déjà extraits.**
 
