@@ -1,12 +1,14 @@
 <div align="center">
 
-<img src="assets/bot-logo.png" alt="LHR Job Hunter" height="140" />
+<img src="assets/bot-logo.png" alt="LHR Job Hunter — scraper d'offres d'emploi hôtellerie-restauration vers Telegram" height="140" />
 
-# 🍽️ LHR Job Hunter
+# 🍽️ LHR Job Hunter — Scraper d'offres d'emploi Hôtellerie-Restauration (Salle/Bar Île-de-France) vers Telegram
+
+### Radar à jobs serveur · chef de rang · barman en Île-de-France — offres fraîches sur Telegram + génération de CV PDF, en Python léger (sans navigateur)
 
 <sub>Données issues de <img src="assets/lhr-logo.png" alt="L'Hôtellerie Restauration" height="20" /> — projet indépendant, non affilié</sub>
 
-**Reçois chaque jour sur Telegram les offres _fraîches_ (≤ 24 h) de serveur, chef de rang & barman en Île-de-France — téléphone, email, salaire, contrat, horaires et mode de candidature déjà extraits.**
+**Scraper Python qui récupère les offres d'emploi _fraîches_ (≤ 24 h) de serveur, serveuse, chef de rang, barman/barmaid, runner et commis de salle en Île-de-France sur lhotellerie-restauration.fr, en extrait téléphone, email, salaire, contrat et horaires, puis te les envoie sur Telegram avec un CV PDF prêt à postuler.**
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![No browser](https://img.shields.io/badge/scraping-httpx_(no_chromium)-success)](#-pourquoi-cest-léger)
@@ -69,6 +71,40 @@ Serveur H/F — Brasserie du Coin
 | 📨 **Telegram** | Accusé immédiat + résultat + CSV joint. Messages longs auto-découpés. |
 | 🪶 **Ultra-léger** | `httpx` only — **pas de Chromium**. Tourne sur le plus petit VPS, ou gratuit sur GitHub Actions. |
 | 🧪 **Fiable** | 90 tests unitaires. Validation Pydantic anti-faux-numéros / faux-emails. |
+
+### 🧠 Les détails malins
+
+Ce qui distingue ce scraper des autres :
+
+- **Décodage des emails masqués** — le site obfusque les emails caractère par caractère dans des `<span>` ; le scraper les **reconstitue** pour récupérer le vrai contact.
+- **Téléphone tous formats** — `06`, `07`, `01`, avec/sans espaces, `.`, `-`, `+33`, `0033`… normalisés en `06 81 77 46 26`, tout en **rejetant** les faux positifs (prix, SIRET).
+- **« Ne pas se déplacer »** — détecte la *négation* : une annonce qui dit « candidature uniquement par mail » n'est jamais marquée « sur place », pour t'éviter un déplacement inutile.
+- **Salaire en texte libre** — extrait `De 1700€ à 2100€ net`, `35,9K€`, `2 700 € net/mois`… même quand le JSON-LD ne le donne pas.
+- **Anti-spam des données** — Pydantic valide chaque champ : un numéro qui n'est pas un vrai téléphone ou un `logo@2x.png` pris pour un email sont automatiquement écartés.
+- **Robuste au site lent** — retry automatique sur les `504`/timeouts de la source, sans faire échouer tout le scan.
+
+---
+
+## 📈 Avancement du projet
+
+Le cœur est **stable et utilisé en production** (scan quotidien automatique sur Telegram). Voici l'état des fonctionnalités :
+
+| Statut | Fonctionnalité |
+|:---:|---|
+| ✅ | **Scraping** Salle/Bar Île-de-France (httpx, sans navigateur) |
+| ✅ | **Filtre 24 h** + ciblage métier (serveur, chef de rang, barman, runner, commis) |
+| ✅ | **Extraction** téléphone FR, email (même masqué), salaire, contrat, horaires, profil recherché |
+| ✅ | **Détection du mode de candidature** (sur place / email / téléphone / via le site) |
+| ✅ | **Validation Pydantic** (rejet des faux numéros / faux emails) |
+| ✅ | **Notifications Telegram** (offres + CSV joint, messages auto-découpés) |
+| ✅ | **Export CSV + JSON** (ouvrable dans Excel) |
+| ✅ | **CV PDF ciblé** par offre (ReportLab, sans IA) — photo optionnelle |
+| ✅ | **Déploiement** : GitHub Actions (gratuit), Docker, systemd |
+| ✅ | **90 tests** unitaires, sans réseau |
+| 🔜 | Autres régions / métiers (contributions bienvenues) |
+| 🔜 | Sortie Slack / Discord / email en plus de Telegram |
+
+> 💡 Tu veux une région ou un métier en plus ? Ouvre une *issue* ou une PR — l'architecture est pensée pour ça (voir [Contribuer](#-contribuer)).
 
 ---
 
